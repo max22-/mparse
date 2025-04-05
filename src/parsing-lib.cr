@@ -10,3 +10,6 @@ puts p2.parse source
 
 p3 = Parser.many(Parser.digit).fby(Parser.char('a').or Parser.char 'b').map{|tup| tup[0] << tup[1]}
 puts p3.parse "123bbc"
+
+p4 = Parser.not Parser.digit.fby(Parser.char('a'))
+puts p4.parse "1b23"

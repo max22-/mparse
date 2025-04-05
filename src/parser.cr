@@ -116,6 +116,20 @@ class Parser(T)
         end
     end
 
+    def self.not(p : Parser(X)) : Parser(Nil) forall X
+        name = "not(#{p.name})"
+        Parser(Nil).new name do | ctx |
+            ctx2 = ctx.dup
+            pr = p.block.call ctx2
+            if pr.success
+                ParseResult(Nil).fail "expected #{name}", ctx
+            else
+                ParseResult(Nil).succeed nil, ctx
+            end
+
+        end
+    end
+
     def fby(other : Parser(X)) : Parser(Tuple(T, X)) forall X
         name = "(#{@name} followed by #{other.name})"
         Parser(Tuple(T, X)).new name do | ctx |
