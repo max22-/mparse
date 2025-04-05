@@ -101,6 +101,10 @@ class Parser(T)
         (satisfy ->(c : Char) { c.ascii_letter? }).set_name("alpha")
     end
 
+    def self.not_in(set : String)
+        (satisfy ->(c : Char) { !set.includes?(c) }).set_name("any character not in #{set.inspect}")
+    end
+
     def self.many(p : Parser(X)) : Parser(Array(X)) forall X
         name = "many(#{p.name})"
         Parser.new name do | ctx |

@@ -13,3 +13,6 @@ puts p3.parse "123bbc"
 
 p4 = Parser.not Parser.digit.fby(Parser.char('a'))
 puts p4.parse "1b23"
+
+p5 = (Parser.many Parser.not_in("|,:")).map{|l| l.join()}
+puts p5.parse("abc123:")
