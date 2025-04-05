@@ -77,7 +77,7 @@ class Parser(T)
         end
     end
 
-    def self.satisfy(pred : Char -> Bool)
+    def self.satisfy(&pred : Char -> Bool)
         name = "character that satisfies #{pred}"
         Parser.new name do | ctx |
             if ctx.eof?
@@ -94,15 +94,15 @@ class Parser(T)
     end
 
     def self.digit
-        (satisfy ->(c : Char) { c.ascii_number? }).set_name("digit")
+        (satisfy { | c | c.ascii_number? }).set_name("digit")
     end
 
     def self.alpha
-        (satisfy ->(c : Char) { c.ascii_letter? }).set_name("alpha")
+        (satisfy { | c | c.ascii_letter? }).set_name("alpha")
     end
 
     def self.not_in(set : String)
-        (satisfy ->(c : Char) { !set.includes?(c) }).set_name("any character not in #{set.inspect}")
+        (satisfy { | c | !set.includes?(c) }).set_name("any character not in #{set.inspect}")
     end
 
     def self.many(p : Parser(X)) : Parser(Array(X)) forall X
