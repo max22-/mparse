@@ -1,0 +1,30 @@
+|search for: foo, present: foo|
+  found: foo
+|search for: foo, present: bar|
+  search for: foo, I've seen: bar
+|search for: foo, present: baz|
+  search for: foo, I've seen: baz
+
+|search for: bar, present: bar|
+  found: bar
+|search for: bar, present: foo|
+  search for: bar, I've seen: foo
+|search for: bar, present: baz|
+  search for: bar, I've seen: baz
+
+|search for: baz, present: baz|
+  found: baz
+|search for: baz, present: foo|
+  search for: baz, I've seen: foo
+|search for: baz, present: bar|
+  search for: baz, I've seen: bar
+
+|search for: foo| couldn't find: foo
+|search for: bar| couldn't find: bar
+|search for: baz| couldn't find: baz
+
+|I've seen: foo| present: foo
+|I've seen: bar| present: bar
+|I've seen: baz| present: baz
+
+|| present: baz, search for: foo, search for: bar, search for: baz

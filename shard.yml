@@ -1,0 +1,13 @@
+name: parsing-lib
+version: 0.1.0
+
+authors:
+  - Maxime ANDRÉ <maxime.andre1986@gmail.com>
+
+targets:
+  parsing-lib:
+    main: src/parsing-lib.cr
+
+crystal: '>= 1.15.1'
+
+license: MIT
