@@ -9,8 +9,8 @@ class ParseContext
         return @idx >= @source.size
     end
 
-    def self.advance(context : ParseContext, amount : Int32 = 1)
-        ParseContext.new context.source, context.idx + amount
+    def self.advance(ctx : ParseContext, amount : Int32 = 1)
+        ParseContext.new ctx.source, ctx.idx + amount
     end
 end
 
@@ -18,17 +18,17 @@ class ParseResult(T)
     getter :success
     getter :value
     getter :error
-    getter :context
+    getter :ctx
 
-    def initialize(@success : Bool, @value : T | Nil, @error : String | Nil, @context : ParseContext)
+    def initialize(@success : Bool, @value : T | Nil, @error : String | Nil, @ctx : ParseContext)
     end
 
-    def self.succeed(value : T, context : ParseContext)
-        ParseResult(T).new true, value, nil, context
+    def self.succeed(value : T, ctx : ParseContext)
+        ParseResult(T).new true, value, nil, ctx
     end
 
-    def self.fail(error : String, context : ParseContext)
-        ParseResult(T).new false, nil, error, context
+    def self.fail(error : String, ctx : ParseContext)
+        ParseResult(T).new false, nil, error, ctx
     end
 end
 
@@ -41,47 +41,47 @@ class Parser(T)
     end
 
     def self.char(c : Char)
-        Parser.new do | context |
-            if context.eof?
-                ParseResult(Char).fail "unexpected eof", context
-            elsif context.source[context.idx] != c
-                ParseResult(Char).fail "expected #{c}", context
+        Parser.new do | ctx |
+            if ctx.eof?
+                ParseResult(Char).fail "unexpected eof", ctx
+            elsif ctx.source[ctx.idx] != c
+                ParseResult(Char).fail "expected #{c}", ctx
             else
-                ParseResult.new true, c, nil, ParseContext.advance context
+                ParseResult.new true, c, nil, ParseContext.advance ctx
             end
         end
     end
 
     def self.string(s : String)
-        Parser.new do | context |
-            if context.eof?
-                ParseResult(String).fail "unexpected eof", context
-            elsif context.source[context.idx..].starts_with? s
-                ParseResult(String).succeed s, ParseContext.advance(context, s.size)
+        Parser.new do | ctx |
+            if ctx.eof?
+                ParseResult(String).fail "unexpected eof", ctx
+            elsif ctx.source[ctx.idx..].starts_with? s
+                ParseResult(String).succeed s, ParseContext.advance(ctx, s.size)
             else
-                ParseResult(String).fail "expected \"#{s}\"", context
+                ParseResult(String).fail "expected \"#{s}\"", ctx
             end
         end
     end
 
     def self.digit
-        Parser.new do | context |
-            if context.eof?
-                ParseResult(Char).fail "unexpected eof", context
+        Parser.new do | ctx |
+            if ctx.eof?
+                ParseResult(Char).fail "unexpected eof", ctx
             else
-                c = context.source[context.idx]
+                c = ctx.source[ctx.idx]
                 if c.ascii_number?
-                    ParseResult(Char).succeed c, ParseContext.advance context
+                    ParseResult(Char).succeed c, ParseContext.advance ctx
                 else
-                    ParseResult(Char).fail "expected digit", context
+                    ParseResult(Char).fail "expected digit", ctx
                 end
             end
         end
     end
 
     def parse(source : String)
-        context = ParseContext.new source, 0
-        result = @block.call context
+        ctx = ParseContext.new source, 0
+        result = @block.call ctx
         if !result.success
             raise ParseError.new result.error
         end
