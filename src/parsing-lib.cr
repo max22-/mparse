@@ -8,5 +8,5 @@ puts p.parse source
 p2 = Parser.string "|s"
 puts p2.parse source
 
-p3 = Parser.many Parser.digit
-puts p3.parse "123abc"
+p3 = Parser.many(Parser.digit).fby(Parser.char('a').or Parser.char 'b').map{|tup| tup[0] << tup[1]}
+puts p3.parse "123bbc"
