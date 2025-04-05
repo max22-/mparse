@@ -105,6 +105,10 @@ class Parser(T)
         (satisfy { | c | !set.includes?(c) }).set_name("any character not in #{set.inspect}")
     end
 
+    def self.whitespace
+        many satisfy { | c | c.whitespace? }
+    end
+
     def self.many(p : Parser(X)) : Parser(Array(X)) forall X
         name = "many #{p.name}"
         Parser.new name do | ctx |
