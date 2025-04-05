@@ -16,7 +16,6 @@ end
 
 class ParseResult(T)
     getter :success
-    getter :value
     getter :error
     getter :ctx
 
@@ -30,12 +29,18 @@ class ParseResult(T)
     def self.fail(error : String, ctx : ParseContext)
         ParseResult(T).new false, nil, error, ctx
     end
+
+    def value
+        @value.as(T)
+    end
 end
 
 class ParseError < Exception
 end
 
 class Parser(T)
+    getter :block
+
     def initialize(&block : ParseContext -> ParseResult(T))
         @block = block
     end
@@ -76,6 +81,20 @@ class Parser(T)
                     ParseResult(Char).fail "expected digit", ctx
                 end
             end
+        end
+    end
+
+    def self.many(p : Parser(X)) : Parser(Array(X)) forall X
+        Parser.new do | ctx |
+            ctx2 = ctx.dup
+            result = [] of X
+            loop do
+                pr = p.block.call ctx2
+                break if !pr.success
+                result << pr.value
+                ctx2 = pr.ctx
+            end
+            ParseResult.succeed result, ctx2
         end
     end
 
