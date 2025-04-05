@@ -161,7 +161,7 @@ class Parser(T)
         end
     end
 
-    def map(&f : T -> X) : Parser(X) forall X
+    def apply(&f : T -> X) : Parser(X) forall X
         Parser(X).new @name do | ctx |
             pr = @block.call ctx
             if pr.success
