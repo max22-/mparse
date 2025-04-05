@@ -18,3 +18,6 @@ puts p4.parse "1b23"
 
 p5 = (P.many P.not_in("|,:")).apply{|l| l.join()}
 puts p5.parse("abc123:")
+
+p6 = ((P.many1 P.digit)>>(P.many(P.char 'a'))).fby(P.many1 P.digit)
+puts p6.parse "123a456"

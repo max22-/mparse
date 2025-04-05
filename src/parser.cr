@@ -106,7 +106,7 @@ class Parser(T)
     end
 
     def self.many(p : Parser(X)) : Parser(Array(X)) forall X
-        name = "many(#{p.name})"
+        name = "many #{p.name}"
         Parser.new name do | ctx |
             ctx2 = ctx.dup
             result = [] of X
@@ -118,6 +118,10 @@ class Parser(T)
             end
             ParseResult.succeed result, ctx2
         end
+    end
+
+    def self.many1(p : Parser(X)) : Parser(Array(X)) forall X
+        p.fby(Parser.many p).apply{ | tup | [tup[0]] + tup[1] }.set_name("many1 #{p.name}")
     end
 
     def self.not(p : Parser(X)) : Parser(Nil) forall X
@@ -135,7 +139,7 @@ class Parser(T)
     end
 
     def fby(other : Parser(X)) : Parser(Tuple(T, X)) forall X
-        name = "(#{@name} followed by #{other.name})"
+        name = "(#{@name}) followed by (#{other.name})"
         Parser(Tuple(T, X)).new name do | ctx |
             ctx2 = ctx.dup
             pr = @block.call ctx2
@@ -146,6 +150,14 @@ class Parser(T)
             ctx2 = pr_other.ctx
             ParseResult.succeed({pr.value, pr_other.value}, ctx2)
         end
+    end
+
+    def <<(other : Parser(X)) : Parser(T) forall X
+        fby(other).apply{ | tup | tup[0] }
+    end
+
+    def >>(other : Parser(X)) : Parser(X) forall X
+        fby(other).apply{ | tup | tup[1] }
     end
 
     def or(other : Parser(X)) : Parser(T | X) forall X
