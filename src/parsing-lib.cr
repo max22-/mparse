@@ -33,3 +33,9 @@ left_bracket = (P.char '[').set_name "left bracket"
 right_bracket = (P.char ']').set_name "right_bracket"
 list_of_integers = left_bracket >> (integer.sep_by comma) << right_bracket
 puts list_of_integers.parse "[123, 456, 789]"
+
+begin
+    puts integer.fby(P.whitespace >> integer).parse "123 f"
+rescue e : ParseError
+    puts e
+end
