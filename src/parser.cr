@@ -19,7 +19,7 @@ class ParseResult(T)
     getter :error
     getter :ctx
 
-    def initialize(@success : Bool, @value : T | Nil, @error : String | Nil, @ctx : ParseContext)
+    def initialize(@success : Bool, @value : T?, @error : String?, @ctx : ParseContext)
     end
 
     def self.succeed(value : T, ctx : ParseContext)
@@ -145,15 +145,15 @@ class Parser(T)
     end
 
     # Note for myself : Is it good to return nil ? This would probably not be compatible with "not"
-    def self.optional(p : Parser(X)) : Parser(X | Nil) forall X
+    def self.optional(p : Parser(X)) : Parser(X?) forall X
         name = "optional(#{p.name})"
-        Parser(X | Nil).new name do | ctx |
+        Parser(X?).new name do | ctx |
             ctx2 = ctx.dup
             pr = p.block.call ctx2
             if pr.success
-                ParseResult(X | Nil).succeed pr.value, pr.ctx
+                ParseResult(X?).succeed pr.value, pr.ctx
             else
-                ParseResult(X | Nil).succeed nil, ctx
+                ParseResult(X?).succeed nil, ctx
             end
         end
     end
