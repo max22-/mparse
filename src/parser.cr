@@ -27,12 +27,19 @@ class ParseResult(T)
         ParseResult(T).new true, value, nil, ctx, nil
     end
 
-    def self.fail(error : String, ctx : ParseContext)
-        ParseResult(T).new false, nil, error, ctx, ctx.idx
+    def self.fail(error : String, ctx : ParseContext, error_location : Int32)
+        ParseResult(T).new false, nil, error, ctx, error_location
     end
 
-    def self.fail(pr : ParseResult(X)) : ParseResult(T) forall X
-        ParseResult(T).new false, nil, pr.error, pr.ctx, pr.error_location
+    def update(x : X.class, error : String, ctx : ParseContext, error_location : Int32) : ParseResult(X) forall X
+        if success
+            new_error = error
+            new_error_location = ctx.idx
+        else
+            new_error = error_location == @error_location.as(Int32) ? error : @error
+            new_error_location = @error_location.as(Int32)
+        end
+        ParseResult(X).fail new_error.as(String), ctx, new_error_location
     end
 
     def value
@@ -48,8 +55,9 @@ class Parser(T)
     getter :name
 
     def set_name(name : String)
-        @name = name
-        self
+        Parser.new name do | ctx |
+            @block.call ctx
+        end
     end
 
     def initialize(@name : String, &block : ParseContext -> ParseResult(T))
@@ -60,9 +68,9 @@ class Parser(T)
         name = "character '#{c}'"
         Parser.new name do | ctx |
             if ctx.eof?
-                ParseResult(Char).fail "unexpected eof", ctx
+                ParseResult(Char).fail "unexpected eof", ctx, ctx.idx
             elsif ctx.source[ctx.idx] != c
-                ParseResult(Char).fail "expected #{name}", ctx
+                ParseResult(Char).fail "expected #{name}", ctx, ctx.idx
             else
                 ParseResult(Char).succeed c, ParseContext.advance ctx
             end
@@ -73,11 +81,11 @@ class Parser(T)
         name = "string #{s.inspect}"
         Parser.new name do | ctx |
             if ctx.eof?
-                ParseResult(String).fail "unexpected eof", ctx
+                ParseResult(String).fail "unexpected eof", ctx, ctx.idx
             elsif ctx.source[ctx.idx..].starts_with? s
                 ParseResult(String).succeed s, ParseContext.advance(ctx, s.size)
             else
-                ParseResult(String).fail "expected #{name}", ctx
+                ParseResult(String).fail "expected #{name}", ctx, ctx.idx
             end
         end
     end
@@ -86,13 +94,13 @@ class Parser(T)
         name = "character that satisfies #{pred}"
         Parser.new name do | ctx |
             if ctx.eof?
-                ParseResult(Char).fail "unexpected eof", ctx
+                ParseResult(Char).fail "unexpected eof", ctx, ctx.idx
             else
                 c = ctx.source[ctx.idx]
                 if pred.call c
                     ParseResult(Char).succeed c, ParseContext.advance ctx
                 else
-                    ParseResult(Char).fail "expected #{name}", ctx
+                    ParseResult(Char).fail "expected #{name}", ctx, ctx.idx
                 end
             end
         end
@@ -141,7 +149,7 @@ class Parser(T)
             ctx2 = ctx.dup
             pr = p.block.call ctx2
             if pr.success
-                ParseResult(Nil).fail "expected #{name}", ctx
+                ParseResult(Nil).fail "expected #{name}", ctx, ctx.idx
             else
                 ParseResult(Nil).succeed nil, ctx
             end
@@ -166,14 +174,15 @@ class Parser(T)
     def fby(other : Parser(X)) : Parser(Tuple(T, X)) forall X
         name = "(#{@name}) followed by (#{other.name})"
         Parser(Tuple(T, X)).new name do | ctx |
-            ctx2 = ctx.dup
-            pr = @block.call ctx2
-            next ParseResult(Tuple(T, X)).fail pr if !pr.success
+            ctx1 = ctx.dup
+            pr = @block.call ctx1
+            next pr.update Tuple(T, X), "expected #{@name}", ctx, ctx.idx if !pr.success
             ctx2 = pr.ctx
             pr_other = other.block.call ctx2
-            next ParseResult(Tuple(T, X)).fail pr_other if !pr_other.success
-            ctx2 = pr_other.ctx
-            ParseResult.succeed({pr.value, pr_other.value}, ctx2)
+            #next (ParseResult(Tuple(T, X)).fail pr_other.error.as(String), ctx, pr_other.error_location.as(Int32)) if !pr_other.success
+            next pr_other.update Tuple(T, X), "expected #{other.name}", ctx, ctx2.idx if !pr_other.success
+            ctx3 = pr_other.ctx
+            ParseResult.succeed({pr.value, pr_other.value}, ctx3)
         end
     end
 
@@ -212,7 +221,7 @@ class Parser(T)
             ctx2 = ctx
             pr_other = other.block.call ctx2
             next ParseResult(T | X).succeed pr_other.value, ctx2 if pr_other.success
-            ParseResult(T | X).fail "expected #{name}", ctx
+            ParseResult(T | X).fail "expected #{name}", ctx, ctx.idx
         end
     end
 
@@ -222,7 +231,7 @@ class Parser(T)
             if pr.success
                 ParseResult(X).succeed f.call(pr.value), pr.ctx
             else
-                ParseResult(X).fail pr.error.as(String), pr.ctx
+                pr.update X, "expected #{@name}", ctx, ctx.idx
             end
         end
     end

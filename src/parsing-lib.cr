@@ -34,8 +34,13 @@ right_bracket = (P.char ']').set_name "right_bracket"
 list_of_integers = left_bracket >> (integer.sep_by comma) << right_bracket
 puts list_of_integers.parse "[123, 456, 789]"
 
+puts ""
+puts "Example that fails *******"
+
+integer = ((P.many1 P.digit).apply{ | l | l.join }).set_name "integer"
+
 begin
-    puts integer.fby(P.whitespace >> integer).parse "123 f"
+    puts (integer<<(P.whitespace)).fby(integer).fby(P.char 'P').parse "123 f"
 rescue e : ParseError
     puts e
 end
