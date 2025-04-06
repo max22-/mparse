@@ -18,16 +18,21 @@ class ParseResult(T)
     getter :success
     getter :error
     getter :ctx
+    property :error_location
 
-    def initialize(@success : Bool, @value : T?, @error : String?, @ctx : ParseContext)
+    def initialize(@success : Bool, @value : T?, @error : String?, @ctx : ParseContext, @error_location : Int32?)
     end
 
     def self.succeed(value : T, ctx : ParseContext)
-        ParseResult(T).new true, value, nil, ctx
+        ParseResult(T).new true, value, nil, ctx, nil
     end
 
     def self.fail(error : String, ctx : ParseContext)
-        ParseResult(T).new false, nil, error, ctx
+        ParseResult(T).new false, nil, error, ctx, ctx.idx
+    end
+
+    def self.fail(pr : ParseResult(X)) : ParseResult(T) forall X
+        ParseResult(T).new false, nil, pr.error, pr.ctx, pr.error_location
     end
 
     def value
@@ -163,10 +168,10 @@ class Parser(T)
         Parser(Tuple(T, X)).new name do | ctx |
             ctx2 = ctx.dup
             pr = @block.call ctx2
-            next (ParseResult({T, X}).fail "expected #{name}", ctx) if !pr.success
+            next ParseResult(Tuple(T, X)).fail pr if !pr.success
             ctx2 = pr.ctx
             pr_other = other.block.call ctx2
-            next (ParseResult({T, X}).fail "expected #{name}", ctx) if !pr_other.success
+            next ParseResult(Tuple(T, X)).fail pr_other if !pr_other.success
             ctx2 = pr_other.ctx
             ParseResult.succeed({pr.value, pr_other.value}, ctx2)
         end
@@ -235,7 +240,7 @@ class Parser(T)
         ctx = ParseContext.new source, 0
         result = @block.call ctx
         if !result.success
-            raise ParseError.new "at #{ctx.idx}: " + result.error.as(String)
+            raise ParseError.new "at #{result.error_location}: " + result.error.as(String)
         end
         result.value
     end
