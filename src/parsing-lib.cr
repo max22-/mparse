@@ -26,7 +26,10 @@ symbol = (P.whitespace >> P.many1 P.not_in "|:,").apply{ | l | l.join().strip() 
 stack = (symbol << P.char ':').set_name "stack"
 puts (stack.parse "  abc :").inspect
 
-integer = (P.whitespace >> P.many1 P.digit).set_name "integer"
-comma = P.whitespace >> P.char ','
-list_of_integers = (P.char '[').fby(integer.sep_by comma).fby P.char ']'
-puts list_of_integers.parse "[1, 2, 3]"
+puts "*******"
+integer = (P.whitespace >> P.many1 P.digit).apply{ | l | l.join }.set_name "integer"
+comma = (P.whitespace >> P.char ',')
+left_bracket = (P.char '[').set_name "left bracket"
+right_bracket = (P.char ']').set_name "right_bracket"
+list_of_integers = left_bracket >> (integer.sep_by comma) << right_bracket
+puts list_of_integers.parse "[123, 456, 789]"
