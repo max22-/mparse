@@ -185,8 +185,8 @@ class Parser(T)
         Parser(Array(T)).new name do | ctx |
             ctx2 = ctx.dup
             result = [] of T
-            pr = @block.call ctx
-            next ParseResult.succeed result, ctx
+            pr = @block.call ctx2
+            next ParseResult.succeed result, pr.ctx if !pr.success
             ctx2 = pr.ctx
             result << pr.value
             pr2 = Parser.many(sep >> self).block.call ctx2
