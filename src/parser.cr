@@ -101,6 +101,7 @@ class Parser(T)
         (satisfy { | c | c.ascii_letter? }).set_name("alpha")
     end
 
+    # Matches any character not present in the given string. (consumes input)
     def self.not_in(set : String)
         (satisfy { | c | !set.includes?(c) }).set_name("any character not in #{set.inspect}")
     end
@@ -128,6 +129,7 @@ class Parser(T)
         p.fby(Parser.many p).apply{ | tup | [tup[0]] + tup[1] }.set_name("many1 #{p.name}")
     end
 
+    # If p fails, not(p) succeeds; If p succeeds not(p) fails; Does not consume any input.
     def self.not(p : Parser(X)) : Parser(Nil) forall X
         name = "not(#{p.name})"
         Parser(Nil).new name do | ctx |
