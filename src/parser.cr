@@ -144,6 +144,20 @@ class Parser(T)
         end
     end
 
+    # Note for myself : Is it good to return nil ? This would probably not be compatible with "not"
+    def self.optional(p : Parser(X)) : Parser(X | Nil) forall X
+        name = "optional(#{p.name})"
+        Parser(X | Nil).new name do | ctx |
+            ctx2 = ctx.dup
+            pr = p.block.call ctx2
+            if pr.success
+                ParseResult(X | Nil).succeed pr.value, pr.ctx
+            else
+                ParseResult(X | Nil).succeed nil, ctx
+            end
+        end
+    end
+
     def fby(other : Parser(X)) : Parser(Tuple(T, X)) forall X
         name = "(#{@name}) followed by (#{other.name})"
         Parser(Tuple(T, X)).new name do | ctx |
@@ -164,6 +178,24 @@ class Parser(T)
 
     def >>(other : Parser(X)) : Parser(X) forall X
         fby(other).apply{ | tup | tup[1] }
+    end
+
+    def sep_by(sep : Parser(X)) : Parser(Array(T)) forall X
+        name = "(#{self.name}) separated by (#{sep.name})"
+        Parser(Array(T)).new name do | ctx |
+            ctx2 = ctx.dup
+            result = [] of T
+            pr = @block.call ctx
+            next ParseResult.succeed result, ctx
+            ctx2 = pr.ctx
+            result << pr.value
+            pr2 = Parser.many(sep >> self).block.call ctx2
+            if pr2.success
+                ParseResult.succeed [pr.value] + pr2.value, pr2.ctx
+            else
+                ParseResult.succeed [pr.value], pr.ctx
+            end
+        end
     end
 
     def or(other : Parser(X)) : Parser(T | X) forall X
@@ -194,7 +226,7 @@ class Parser(T)
         ctx = ParseContext.new source, 0
         result = @block.call ctx
         if !result.success
-            raise ParseError.new result.error
+            raise ParseError.new "at #{ctx.idx}: " + result.error.as(String)
         end
         result.value
     end
