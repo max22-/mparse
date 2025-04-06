@@ -106,7 +106,7 @@ class Parser(T)
     end
 
     def self.whitespace
-        many satisfy { | c | c.whitespace? }
+        many(satisfy { | c | c.whitespace? }).set_name "whitespace"
     end
 
     def self.many(p : Parser(X)) : Parser(Array(X)) forall X
