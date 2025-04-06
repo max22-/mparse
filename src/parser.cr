@@ -222,6 +222,15 @@ class Parser(T)
         end
     end
 
+    # Calls a block when the parser has been run, whether it succeeds or fails.
+    def debug(&debug_block)
+        Parser.new @name do | ctx |
+            pr = @block.call ctx
+            debug_block.call
+            pr
+        end
+    end
+
     def parse(source : String)
         ctx = ParseContext.new source, 0
         result = @block.call ctx
