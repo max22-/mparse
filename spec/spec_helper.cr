@@ -1,2 +1,2 @@
 require "spec"
-require "../src/parsing-lib"
+require "../src/parser"
