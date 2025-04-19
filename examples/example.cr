@@ -1,4 +1,4 @@
-require "./parser"
+require "../src/mparse"
 
 source = {{ read_file "./examples/example1.alta" }}
 
